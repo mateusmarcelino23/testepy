@@ -1,7 +1,7 @@
 from pathlib import Path # importa o pathlib pra organização de arquivos
+import shutil # o shutil ajuda a mover arquivos e pastas com segurança
 
 pasta_home = Path.home() # cria variável da pasta principal da área de trabalho
-area_de_trabalho = pasta_home / "Desktop" # cria outra variável para destacar a página "Desktop da área de trabalho" 
 
 ORGANIZACAO = { # dicionário para listar a organização das pastas de acordo com os sufixos dos arquivos
     ".txt": pasta_home / "Documents",
@@ -13,17 +13,33 @@ ORGANIZACAO = { # dicionário para listar a organização das pastas de acordo c
     ".mp3": pasta_home / "Music"
 }
 
-for item in area_de_trabalho.iterdir(): # Lista e processa todos os itens da Área de Trabalho
-    if item.is_file(): # "Se o item da área de trabalho for um arquivo"
-        extensao = item.suffix # variável que pega os sufixos do item (arquivo)
-        if extensao in ORGANIZACAO:
-            pasta_destino = ORGANIZACAO[extensao]
-            pasta_destino.mkdir(exist_ok=True) # ação para garantir que o arquivo com sufixo presente no dicionário seja movido para a pasta correta
+pastas_para_organizar = { # dicionário com as 5 pastas onde o script vai entrar para procurar arquivos perdidos
+    pasta_home / "Documents",
+    pasta_home / "Music",
+    pasta_home / "Pictures",
+    pasta_home / "Videos",
+    pasta_home / "Downloads",
+}
 
-            novo_caminho = pasta_destino / item.name
-            item.rename(novo_caminho) # ação para ajustar o caminho novo do arquivo na área de trabalho
+for pasta_atual in pastas_para_organizar: # Pega todas as pastas para realizar o script, uma por uma
+    if not pasta_atual.exists(): 
+        continue # se uma delas não existe, o script ignora e continua
 
-            print(f"Movendo {item.name} para {pasta_destino.name}") # mostra os arquivos que estão sendo movidos no terminal
+    print(f"\n--- Verificando: {pasta_atual.name} ---") # mostra no terminal a verificação das pastas para orgaizar os arquivos
 
-        else:
-            print(f"Extensão {extensao} não reconhecida. Arquivo {item.name} não será movido.") # arquivos com sufixos não presentes no dicionário não serão movidos
+    for item in pasta_atual.iterdir(): # inicia a análise de todos os itens da pasta atual
+        if item.is_file(): # se o item analisado for um arquivo
+            extencao = item.suffix.lower() # variável para pegar os sufixos dos arquivos
+
+            if extencao in ORGANIZACAO: # se o sufixo de um arquivo da pasta estiver no dicionário de organização
+                pasta_destino = ORGANIZACAO[extencao] # ação para mover o arquivo para a pasta correta
+
+                if item.parent == pasta_destino: # se o arquivo estiver na pasta correta, ele pode continuar nela
+                    continue
+
+                pasta_destino.mkdir(parents=True, exist_ok=True) # Criar a pasta de destino caso ela não exista
+
+                novo_caminho = pasta_destino / item.name # define o caminho final do arquivo
+
+                shutil.move(item, novo_caminho) # move o arquivo pro novo caminho
+                print(f"{item.name} movido com sucesso de {pasta_atual} para {pasta_destino}!")
